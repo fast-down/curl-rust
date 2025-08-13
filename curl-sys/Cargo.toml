@@ -20,14 +20,15 @@ path = "lib.rs"
 libz-sys = { version = "1.0.18", default-features = false, features = ["libc"] }
 libc = "0.2.2"
 libnghttp2-sys = { optional = true, version = "0.1.3" }
+libnghttp3-sys = { optional = true, git = "https://github.com/CyanProjects/nghttp3-rs" }
+libngtcp2-sys = { optional = true, features = ["openssl"], git = "https://github.com/CyanProjects/ngtcp2-rs" }
+openssl-sys = { version = "0.9.109", features = ["vendored"] }
+#boring-sys = { version = "4.17.0" }
 
 [dependencies.rustls-ffi]
 version = "0.15"
 optional = true
 features = ["no_log_capture"]
-
-[target.'cfg(all(unix))'.dependencies]
-openssl-sys = { version = "0.9.64", optional = true }
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.59", features = ["Win32_Networking_WinSock"] }
@@ -40,14 +41,12 @@ pkg-config = "0.3.3"
 cc = "1.0"
 
 [features]
-default = ["ssl"]
-ssl = ["openssl-sys"]
+default = []
 http2 = ["libnghttp2-sys"]
+http3-nghttp3 = ["libnghttp3-sys", "libngtcp2-sys"]
 mesalink = []
 rustls = ["rustls-ffi"]
 static-curl = []
-windows-static-ssl = []
-static-ssl = ["openssl-sys/vendored"]
 spnego = []
 force-system-lib-on-osx = []
 protocol-ftp = []

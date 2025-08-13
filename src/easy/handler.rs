@@ -460,6 +460,10 @@ pub enum HttpVersion {
     ///
     /// (Added in CURL 7.66.0)
     V3 = curl_sys::CURL_HTTP_VERSION_3 as isize,
+    /// Use HTTP/3 without fallback. For
+    /// HTTPS only. For HTTP, this makes
+    /// libcurl return error.
+    V3Only = curl_sys::CURL_HTTP_VERSION_3ONLY as isize,
 }
 
 /// Possible values to pass to the `ssl_version` and `ssl_min_max_version` method.

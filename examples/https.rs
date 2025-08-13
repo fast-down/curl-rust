@@ -5,13 +5,15 @@
 
 extern crate curl;
 
-use curl::easy::Easy;
+use curl::easy::{Easy, HttpVersion};
 use std::io::{stdout, Write};
 
 fn main() -> Result<(), curl::Error> {
     let mut curl = Easy::new();
 
-    curl.url("https://example.com/")?;
+    curl.url("https://cloudflare-quic.com/cdn-cgi/trace")?;
+    curl.cainfo("/etc/ssl/certs/ca-certificates.crt")?;
+    curl.http_version(HttpVersion::V3Only)?;
     curl.write_function(|data| {
         stdout().write_all(data).unwrap();
         Ok(data.len())

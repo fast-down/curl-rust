@@ -97,7 +97,7 @@ pub fn init() {
         #[cfg(need_openssl_init)]
         openssl_probe::init_ssl_cert_env_vars();
         #[cfg(need_openssl_init)]
-        openssl_sys::init();
+        boring_sys::init();
 
         unsafe {
             assert_eq!(curl_sys::curl_global_init(curl_sys::CURL_GLOBAL_ALL), 0);

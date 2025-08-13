@@ -4,10 +4,14 @@
 // These `extern crate` are required for conditional linkages of curl.
 #[cfg(link_libnghttp2)]
 extern crate libnghttp2_sys;
-#[cfg(link_libz)]
-extern crate libz_sys;
 #[cfg(link_openssl)]
 extern crate openssl_sys;
+#[cfg(link_libnghttp3)]
+extern crate libnghttp3_sys;
+#[cfg(link_libngtcp2)]
+extern crate libngtcp2_sys;
+#[cfg(link_libz)]
+extern crate libz_sys;
 #[cfg(feature = "rustls")]
 extern crate rustls_ffi;
 
@@ -665,6 +669,7 @@ pub const CURL_HTTP_VERSION_2_PRIOR_KNOWLEDGE: c_int = 5;
 /// Use HTTP/3, fallback to HTTP/2 or HTTP/1 if needed.
 /// (Added in CURL 7.66.0)
 pub const CURL_HTTP_VERSION_3: c_int = 30;
+pub const CURL_HTTP_VERSION_3ONLY: c_int = 31;
 
 // Note that the type here is wrong, it's just intended to just be an enum.
 pub const CURL_SSLVERSION_DEFAULT: __enum_ty = 0;
