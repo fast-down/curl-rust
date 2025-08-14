@@ -302,7 +302,8 @@ fn main() {
             .define("USE_OPENSSL", None)
             .define("NGHTTP3_STATICLIB", None)
             .define("NGTCP2_STATICLIB", None)
-            .file("curl/lib/vquic/curl_ngtcp2.c");
+            .file("curl/lib/vquic/curl_ngtcp2.c")
+            .file("curl/lib/vtls/openssl.c");
 
         if cfg!(feature = "openssl-aws-lc") {
             cfg.define("OPENSSL_IS_AWSLC", None);
@@ -332,7 +333,8 @@ fn main() {
             .define("USE_OPENSSL", None)
             .define("USE_OPENSSL_QUIC", None)
             .define("NGHTTP3_STATICLIB", None)
-            .file("curl/lib/vquic/curl_osslq.c");
+            .file("curl/lib/vquic/curl_osslq.c")
+            .file("curl/lib/vtls/openssl.c");
 
         if cfg!(feature = "openssl-aws-lc") {
             cfg.define("OPENSSL_IS_AWSLC", None);
