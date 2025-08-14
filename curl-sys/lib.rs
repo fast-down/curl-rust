@@ -6,6 +6,8 @@
 extern crate libnghttp2_sys;
 #[cfg(link_openssl)]
 extern crate openssl_sys;
+#[cfg(link_boring)]
+extern crate boring_sys;
 #[cfg(link_libnghttp3)]
 extern crate libnghttp3_sys;
 #[cfg(link_libngtcp2)]

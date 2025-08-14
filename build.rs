@@ -22,7 +22,7 @@ fn main() {
 
     if use_openssl {
         // The system libcurl should have the default certificate paths configured.
-        if env::var_os("DEP_CURL_STATIC").is_some() {
+        if env::var_os("DEP_CURL_STATIC").is_some() && cfg!(feature = "ssl-probe") {
             println!("cargo:rustc-cfg=need_openssl_probe");
         }
     }

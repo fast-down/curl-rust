@@ -9,6 +9,7 @@ fn main() {
         "cargo:rustc-check-cfg=cfg(\
             libcurl_vendored,\
             link_openssl,\
+            link_boring,\
             link_libnghttp2,\
             link_libnghttp3,\
             link_libngtcp2,\
@@ -238,19 +239,18 @@ fn main() {
         .file("curl/lib/vauth/vauth.c")
         .file("curl/lib/version.c")
         .file("curl/lib/vquic/curl_msh3.c")
-        .file("curl/lib/vquic/curl_ngtcp2.c")
         .file("curl/lib/vquic/curl_quiche.c")
         .file("curl/lib/vquic/vquic-tls.c")
         .file("curl/lib/vquic/vquic.c")
         .file("curl/lib/vtls/hostcheck.c")
         .file("curl/lib/vtls/keylog.c")
         .file("curl/lib/vtls/vtls.c")
-        .file("curl/lib/vtls/openssl.c")
         .file("curl/lib/vtls/vtls_scache.c")
         .file("curl/lib/ws.c")
         .define("HAVE_GETADDRINFO", None)
         .define("HAVE_GETPEERNAME", None)
         .define("HAVE_GETSOCKNAME", None)
+        .opt_level(3)
         .warnings(false);
 
     if cfg!(feature = "ntlm") {
@@ -288,16 +288,87 @@ fn main() {
         }
     }
 
-    if cfg!(feature = "http3-nghttp3") {
+    if cfg!(feature = "boring") {
+        if let Some(path) = env::var_os("DEP_BORINGSSL_ROOT") {
+            let path = PathBuf::from(path);
+            cfg.include(path.join("boringssl/src/include"));
+        }
+    }
+
+    if cfg!(feature = "http3-nghttp3-ngtcp2") {
         cfg
             .define("USE_NGHTTP3", None)
             .define("USE_NGTCP2", None)
             .define("USE_OPENSSL", None)
-            .define("OPENSSL_QUIC_API2", None)
             .define("NGHTTP3_STATICLIB", None)
-            .define("NGTCP2_STATICLIB", None);
+            .define("NGTCP2_STATICLIB", None)
+            .file("curl/lib/vquic/curl_ngtcp2.c");
+
+        if cfg!(feature = "openssl-aws-lc") {
+            cfg.define("OPENSSL_IS_AWSLC", None);
+        } else {
+            cfg.define("OPENSSL_QUIC_API2", None);
+        }
 
         println!("cargo:rustc-cfg=link_openssl");
+        println!("cargo:rustc-cfg=link_libnghttp3");
+        println!("cargo:rustc-cfg=link_libngtcp2");
+
+        if let Some(path) = env::var_os("DEP_NGHTTP3_ROOT") {
+            let path = PathBuf::from(path);
+            cfg.include(path.join("include"));
+        }
+        if let Some(path) = env::var_os("DEP_NGTCP2_ROOT") {
+            let path = PathBuf::from(path);
+            cfg.include(path.join("include"));
+        }
+    } else if cfg!(feature = "http3-nghttp3-openssl-quic") {
+        cfg
+            .define("USE_NGHTTP3", None)
+            .define("USE_OPENSSL", None)
+            .define("USE_OPENSSL_QUIC", None)
+            .define("NGHTTP3_STATICLIB", None)
+            .file("curl/lib/vquic/curl_osslq.c");
+
+        if cfg!(feature = "openssl-aws-lc") {
+            cfg.define("OPENSSL_IS_AWSLC", None);
+        } else {
+            cfg.define("OPENSSL_QUIC_API2", None);
+        }
+
+        println!("cargo:rustc-cfg=link_openssl");
+        println!("cargo:rustc-cfg=link_libnghttp3");
+
+        if let Some(path) = env::var_os("DEP_NGHTTP3_ROOT") {
+            let path = PathBuf::from(path);
+            cfg.include(path.join("include"));
+        }
+    } else if cfg!(feature = "http3-nghttp3-bssl-quic") {
+        println!("cargo:warning=http3-nghttp3-bssl-quic is experimental and may not working correctly");
+        cfg
+            .define("USE_NGHTTP3", None)
+            .define("USE_OPENSSL", None)
+            .define("NGHTTP3_STATICLIB", None)
+            .file("curl/lib/vtls/openssl.c");
+
+        println!("cargo:rustc-cfg=link_boring");
+        println!("cargo:rustc-cfg=link_libnghttp3");
+
+        if let Some(path) = env::var_os("DEP_NGHTTP3_ROOT") {
+            let path = PathBuf::from(path);
+            cfg.include(path.join("include"));
+        }
+    } else if cfg!(feature = "http3-nghttp3-ngtcp2-bssl") {
+        cfg
+            .define("USE_NGHTTP3", None)
+            .define("USE_NGTCP2", None)
+            .define("USE_OPENSSL", None)
+            .define("NGHTTP3_STATICLIB", None)
+            .define("NGTCP2_STATICLIB", None)
+            .file("curl/lib/vquic/curl_ngtcp2.c")
+            .file("curl/lib/vtls/openssl.c");
+
+        println!("cargo:rustc-cfg=link_boring");
         println!("cargo:rustc-cfg=link_libnghttp3");
         println!("cargo:rustc-cfg=link_libngtcp2");
 
@@ -330,6 +401,46 @@ fn main() {
             .file("curl/lib/vtls/rustls.c")
             .file("curl/lib/vtls/x509asn1.c")
             .include(env::var_os("DEP_RUSTLS_FFI_INCLUDE").unwrap());
+    } else if cfg!(feature = "windows-static-ssl") && windows {
+        cfg.define("USE_OPENSSL", None)
+            .file("curl/lib/vtls/openssl.c");
+        // We need both openssl and zlib
+        // Those can be installed with
+        // ```shell
+        // git clone https://github.com/microsoft/vcpkg
+        // cd vcpkg
+        // ./bootstrap-vcpkg.bat -disableMetrics
+        // ./vcpkg.exe integrate install
+        // ./vcpkg.exe install openssl:x64-windows-static-md
+        // ```
+        #[cfg(target_env = "msvc")]
+        vcpkg::Config::new().find_package("openssl").ok();
+        #[cfg(target_env = "msvc")]
+        vcpkg::Config::new().find_package("zlib").ok();
+    } else if cfg!(feature = "openssl") {
+        if windows {
+            // For windows, spnego feature is auto on in case ssl feature is on.
+            // Please see definition of USE_SPNEGO in curl_setup.h for more info.
+            cfg.define("USE_WINDOWS_SSPI", None)
+                .define("USE_SCHANNEL", None)
+                .file("curl/lib/http_negotiate.c")
+                .file("curl/lib/curl_sspi.c")
+                .file("curl/lib/socks_sspi.c")
+                .file("curl/lib/vauth/krb5_sspi.c")
+                .file("curl/lib/vauth/spnego_sspi.c")
+                .file("curl/lib/vauth/vauth.c")
+                .file("curl/lib/vtls/schannel.c")
+                .file("curl/lib/vtls/schannel_verify.c")
+                .file("curl/lib/vtls/x509asn1.c");
+        } else {
+            cfg.define("USE_OPENSSL", None)
+                .file("curl/lib/vtls/openssl.c");
+
+            println!("cargo:rustc-cfg=link_openssl");
+            if let Some(path) = env::var_os("DEP_OPENSSL_INCLUDE") {
+                cfg.include(path);
+            }
+        }
     }
 
     // Configure platform-specific details.

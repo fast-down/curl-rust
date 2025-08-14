@@ -19,12 +19,11 @@ socket2 = "0.6.0"
 
 # Unix platforms use OpenSSL for now to provide SSL functionality
 [target.'cfg(all(unix))'.dependencies]
-openssl-sys = { version = "0.9.109" }
-openssl-probe = { version = "0.1.2", optional = true }
+openssl-probe = { version = "0.1.6", optional = true }
 
 [target.'cfg(target_env = "msvc")'.dependencies]
 schannel = "0.1.13"
-windows-sys = { version = "0.59", features = ["Win32_Foundation", "Win32_System_LibraryLoader", "Win32_Security_Cryptography"] }
+windows-sys = { version = "0.60.2", features = ["Win32_Foundation", "Win32_System_LibraryLoader", "Win32_Security_Cryptography"] }
 
 [dev-dependencies]
 mio = "0.6"
@@ -35,13 +34,18 @@ anyhow = "1.0.31"
 members = ["systest"]
 
 [features]
-default = ["ssl"]
-openssl-vendor = ["openssl-sys/vendored"]
-openssl-aws-lc = ["openssl-sys/aws-lc"]
-ssl = ["openssl-probe"] # OpenSSL/system TLS backend
+default = []
+openssl = ["curl-sys/openssl-sys"]
+boring = ["curl-sys/boring"]
+openssl-vendored = ["curl-sys/openssl-vendored"]
+openssl-aws-lc = ["curl-sys/openssl-aws-lc"]
+ssl-probe = ["openssl-probe"]
 mesalink = ["curl-sys/mesalink"] # MesaLink TLS backend
 http2 = ["curl-sys/http2"]
-http3 = ["curl-sys/http3-nghttp3"]
+http3-nghttp3-ngtcp2 = ["curl-sys/http3-nghttp3-ngtcp2"]
+http3-nghttp3-openssl-quic = ["curl-sys/http3-nghttp3-openssl-quic"]
+http3-nghttp3-ngtcp2-bssl = ["curl-sys/http3-nghttp3-ngtcp2-bssl"]
+http3-nghttp3-bssl-quic = ["curl-sys/http3-nghttp3-bssl-quic"]
 spnego = ["curl-sys/spnego"]
 rustls = ["curl-sys/rustls"]
 static-curl = ["curl-sys/static-curl"]
@@ -59,7 +63,6 @@ harness = false
 [[example]]
 name = "https"
 path = "examples/https.rs"
-required-features = ["http3"]
 
 [[example]]
 name = "ssl_proxy"

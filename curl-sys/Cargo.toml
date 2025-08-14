@@ -21,8 +21,9 @@ libz-sys = { version = "1.0.18", default-features = false, features = ["libc"] }
 libc = "0.2.2"
 libnghttp2-sys = { optional = true, version = "0.1.3" }
 libnghttp3-sys = { optional = true, git = "https://github.com/CyanProjects/nghttp3-rs" }
-libngtcp2-sys = { optional = true, features = ["openssl"], git = "https://github.com/CyanProjects/ngtcp2-rs" }
-openssl-sys = { version = "0.9.109", features = ["vendored"] }
+libngtcp2-sys = { optional = true, git = "https://github.com/CyanProjects/ngtcp2-rs" }
+openssl-sys = { optional = true, version = "0.9.109" }
+boring-sys = { optional = true, version = "4.17.0" }
 #boring-sys = { version = "4.17.0" }
 
 [dependencies.rustls-ffi]
@@ -31,7 +32,10 @@ optional = true
 features = ["no_log_capture"]
 
 [target.'cfg(windows)'.dependencies]
-windows-sys = { version = "0.59", features = ["Win32_Networking_WinSock"] }
+windows-sys = { version = "0.60.2", features = ["Win32_Networking_WinSock"] }
+
+[target.'cfg(all(unix))'.dependencies]
+openssl-probe = { version = "0.1.2", optional = true }
 
 [target.'cfg(target_env = "msvc")'.build-dependencies]
 vcpkg = "0.2"
@@ -42,8 +46,17 @@ cc = "1.0"
 
 [features]
 default = []
+ssl-probe = ["openssl-probe"]
+openssl = ["openssl-sys"]
+boring = ["boring-sys"]
+windows-static-ssl = []
+openssl-vendored = ["openssl", "openssl-sys/vendored"]
+openssl-aws-lc = ["openssl", "openssl-sys/aws-lc"]
 http2 = ["libnghttp2-sys"]
-http3-nghttp3 = ["libnghttp3-sys", "libngtcp2-sys"]
+http3-nghttp3-ngtcp2 = ["libnghttp3-sys", "libngtcp2-sys", "openssl", "libngtcp2-sys/openssl"]
+http3-nghttp3-openssl-quic = ["libnghttp3-sys", "openssl"]
+http3-nghttp3-ngtcp2-bssl = ["libnghttp3-sys", "libngtcp2-sys", "boring", "libngtcp2-sys/boringssl"]
+http3-nghttp3-bssl-quic = ["libnghttp3-sys", "boring"]
 mesalink = []
 rustls = ["rustls-ffi"]
 static-curl = []
