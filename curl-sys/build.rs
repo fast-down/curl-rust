@@ -322,6 +322,10 @@ fn main() {
             let path = PathBuf::from(path);
             cfg.include(path.join("include"));
         }
+        if let Some(path) = env::var_os("DEP_OPENSSL_INCLUDE") {
+            let path = PathBuf::from(path);
+            cfg.include(path);
+        }
     } else if cfg!(feature = "http3-nghttp3-openssl-quic") {
         cfg
             .define("USE_NGHTTP3", None)
@@ -342,6 +346,10 @@ fn main() {
         if let Some(path) = env::var_os("DEP_NGHTTP3_ROOT") {
             let path = PathBuf::from(path);
             cfg.include(path.join("include"));
+        }
+        if let Some(path) = env::var_os("DEP_OPENSSL_INCLUDE") {
+            let path = PathBuf::from(path);
+            cfg.include(path);
         }
     } else if cfg!(feature = "http3-nghttp3-bssl-quic") {
         println!("cargo:warning=http3-nghttp3-bssl-quic is experimental and may not working correctly");
