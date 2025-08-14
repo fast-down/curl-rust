@@ -13,7 +13,7 @@ fn main() -> Result<(), curl::Error> {
 
     curl.url("https://cloudflare-quic.com/cdn-cgi/trace")?;
     curl.cainfo("/etc/ssl/certs/ca-certificates.crt")?;
-    curl.http_version(HttpVersion::V3Only)?;
+    curl.http_version(HttpVersion::V3)?;
     curl.write_function(|data| {
         stdout().write_all(data).unwrap();
         Ok(data.len())
